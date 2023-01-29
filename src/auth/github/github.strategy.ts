@@ -24,7 +24,6 @@ export class GithubStrategy extends PassportStrategy(Strategy, 'github') {
         'repo',
         'write:discussion',
       ],
-      // scope: ['user:email'],
     });
   }
 

@@ -14,6 +14,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(payload: any) {
+    if (!payload) return '未授權成功';
     return payload;
   }
 }

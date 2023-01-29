@@ -5,6 +5,7 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { GetUserIssueDto } from './dto/get-user-issue.dto';
 import { GetIssueDetailDto } from './dto/get-issue-detail.dto';
 import { SearchIssueDto } from './dto/search-issue.dto';
+import { Issues, IssueDetail } from './type/type';
 
 const userRequest = axios.create({
   baseURL: 'https://api.github.com',
@@ -43,7 +44,11 @@ export class UserService {
         },
       })
       .then((res) => {
-        return res.data;
+        const userData = [];
+        res.data.forEach((item) => {
+          userData.push(item.name);
+        });
+        return userData;
       })
       .catch((error) => {
         console.error(error);
@@ -51,7 +56,7 @@ export class UserService {
     return result;
   }
 
-  async getAllIssues(userData: GetUserIssueDto) {
+  async getAllIssues(userData: GetUserIssueDto): Promise<Issues[]> {
     const { owner, repo, access_token, query } = userData;
     const result = await userRequest
       .get(`/repos/${owner}/${repo}/issues`, {
@@ -61,16 +66,24 @@ export class UserService {
         params: query,
       })
       .then((res) => {
-        return res.data;
+        const allIssues = [];
+        res.data.forEach((item) => {
+          const { title, number, labels, created_at, body } = item;
+          const label = labels.length
+            ? { name: labels[0].name, description: labels[0].description }
+            : { name: '', description: '' };
+          allIssues.push({ title, number, label, created_at, body });
+        });
+        return allIssues;
       })
       .catch((error) => {
-        console.error(error);
+        console.error(error.code);
       });
 
-    return result;
+    return result as Issues[];
   }
 
-  async getIssue(userData: GetIssueDetailDto) {
+  async getIssue(userData: GetIssueDetailDto): Promise<IssueDetail> {
     const { owner, repo, issue_number, access_token } = userData;
     const result = await userRequest
       .get(`/repos/${owner}/${repo}/issues/${issue_number}`, {
@@ -79,12 +92,24 @@ export class UserService {
         },
       })
       .then((res) => {
-        return res.data;
+        const { title, number, labels, body, created_at } = res.data;
+        const label = labels.length
+          ? { name: labels[0].name, description: labels[0].description }
+          : { name: '', description: '' };
+
+        return {
+          title,
+          number,
+          label,
+          body,
+          created_at,
+        };
       })
       .catch((error) => {
-        console.error(error);
+        console.error(error.code);
+        return null;
       });
-    return result;
+    return result as IssueDetail | null;
   }
 
   async update(userData: UpdateUserDto) {
@@ -101,7 +126,7 @@ export class UserService {
       .catch((error) => {
         console.error(error);
       });
-    return result;
+    if (result) return '修改成功';
   }
 
   async search(query: SearchIssueDto) {

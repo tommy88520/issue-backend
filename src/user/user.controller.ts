@@ -6,6 +6,8 @@ import {
   Patch,
   UseGuards,
   Req,
+  Res,
+  Query,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { UserService } from './user.service';
@@ -30,27 +32,34 @@ export class UserController {
 
   @Get('github/redirect')
   @UseGuards(GithubGuard)
-  async githubAuthCallback(@Req() req: Request) {
+  async githubAuthCallback(@Req() req: Request, @Res() res) {
     const result = req.user as User;
-    return result;
+    res.redirect(`${process.env.FRONTEND_URL}?token=${result.token}`);
+  }
+
+  @Get('getUserData')
+  @UseGuards(JwtAuthGuard)
+  async getUserData(@Req() req: Request) {
+    return req.user;
   }
 
   @Get('getRepos')
   @UseGuards(JwtAuthGuard)
   async findRepos(@Req() req: Request) {
     const { username, token } = req.user as User;
-
     const result = await this.userService.findRepos(username, token);
     return result;
   }
+
   @Get('getAllIssues')
   @UseGuards(JwtAuthGuard)
-  async findAllIssues(@Body() body: any, @Req() req: Request) {
-    const { token } = req.user as User;
+  async findAllIssues(@Query() query: any, @Req() req: Request) {
+    const { token, username } = req.user as User;
     const userData: GetUserIssueDto = {
+      owner: username,
       access_token: token,
       per_page: 10,
-      ...body,
+      ...query,
     };
 
     return await this.userService.getAllIssues(userData);
@@ -58,11 +67,12 @@ export class UserController {
 
   @Get('getIssue')
   @UseGuards(JwtAuthGuard)
-  async getIssue(@Body() body: any, @Req() req: Request) {
-    const { token } = req.user as User;
+  async getIssue(@Query() query: any, @Req() req: Request) {
+    const { token, username } = req.user as User;
     const userData: GetIssueDetailDto = {
+      owner: username,
       access_token: token,
-      ...body,
+      ...query,
     };
     return await this.userService.getIssue(userData);
   }
@@ -70,8 +80,9 @@ export class UserController {
   @Post('createIssue')
   @UseGuards(JwtAuthGuard)
   async createIssue(@Body() body: any, @Req() req: Request) {
-    const { token } = req.user as User;
+    const { token, username } = req.user as User;
     const userData: CreateIssue = {
+      owner: username,
       access_token: token,
       ...body,
     };
@@ -79,14 +90,16 @@ export class UserController {
     return await this.userService.createIssue(userData);
   }
 
-  @Patch('editIssue')
+  @Patch('updateIssue')
   @UseGuards(JwtAuthGuard)
   async update(@Body() updateUserDto: UpdateUserDto, @Req() req: Request) {
-    const { token } = req.user as User;
+    const { token, username } = req.user as User;
     const userData: UpdateUserDto = {
+      owner: username,
       access_token: token,
       ...updateUserDto,
     };
+
     return await this.userService.update(userData);
   }
 
