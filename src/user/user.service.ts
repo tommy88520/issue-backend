@@ -33,13 +33,15 @@ export class UserService {
     if (result) return '新增成功';
   }
 
-  async findRepos(user: string, access_token: string) {
+  async findRepos(user: string, access_token: string, page: number) {
     const result = await userRequest
       .get(`users/${user}/repos`, {
         headers: {
           Authorization: `Bearer ${access_token}`,
         },
         params: {
+          page,
+          per_page: 10,
           sort: 'updated',
         },
       })
@@ -130,16 +132,31 @@ export class UserService {
   }
 
   async search(query: SearchIssueDto) {
-    const { access_token, owner, repo, q, params } = query;
+    const { access_token, owner, repo, q, params, label } = query;
+    const labels = label ? `+is:issue+label:"${label}"` : '';
     const result = await userRequest
-      .get(`search/issues?q=${q}+is:issue+repo:${owner}/${repo}`, {
-        headers: {
-          Authorization: `Bearer ${access_token}`,
+      //https://github.com/tommy88520/clown_backend/issues?q=is:open+is:issue+label:"In+progress"+issue
+      .get(
+        `search/issues?q=${q}+is:open+is:issue+repo:${owner}/${repo}${labels}`,
+        {
+          headers: {
+            Authorization: `Bearer ${access_token}`,
+          },
+          params,
         },
-        params,
-      })
+      )
       .then((res) => {
-        return res.data;
+        const allIssues = [];
+        res.data.items.forEach((item) => {
+          const { title, number, labels, created_at, body } = item;
+          const label = labels.length
+            ? { name: labels[0].name, description: labels[0].description }
+            : { name: '', description: '' };
+          allIssues.push({ title, number, label, created_at, body });
+        });
+        // console.log(allIssues);
+
+        return allIssues;
       })
       .catch((error) => {
         console.error(error);

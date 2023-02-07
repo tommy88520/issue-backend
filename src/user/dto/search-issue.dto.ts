@@ -3,6 +3,7 @@ export class SearchIssueDto {
   owner: string;
   repo: string;
   q: string;
+  label: string;
   params: {
     sort: string;
     order: string;

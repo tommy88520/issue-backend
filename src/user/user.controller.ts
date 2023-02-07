@@ -45,9 +45,13 @@ export class UserController {
 
   @Get('getRepos')
   @UseGuards(JwtAuthGuard)
-  async findRepos(@Req() req: Request) {
+  async findRepos(@Req() req: Request, @Query() query: any) {
     const { username, token } = req.user as User;
-    const result = await this.userService.findRepos(username, token);
+    const result = await this.userService.findRepos(
+      username,
+      token,
+      query.page,
+    );
     return result;
   }
 
@@ -105,12 +109,14 @@ export class UserController {
 
   @Get('searchIssue')
   @UseGuards(JwtAuthGuard)
-  async search(@Body() body: any, @Req() req: Request) {
-    const { token } = req.user as User;
+  async search(@Query() query: any, @Req() req: Request) {
+    const { token, username } = req.user as User;
     const userData: SearchIssueDto = {
+      owner: username,
       access_token: token,
-      ...body,
+      ...query,
     };
+    // console.log(userData);
 
     return await this.userService.search(userData);
   }
