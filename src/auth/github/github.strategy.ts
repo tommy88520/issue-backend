@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { Profile, Strategy } from 'passport-github2';
@@ -28,19 +28,20 @@ export class GithubStrategy extends PassportStrategy(Strategy, 'github') {
   }
 
   async validate(accessToken: string, _refreshToken: string, profile: Profile) {
+    const { id, emails, username, photos, displayName } = profile;
     const payload = {
-      email: profile.emails[0].value,
+      email: emails[0].value,
       token: accessToken,
-      username: profile.username,
+      username: username,
     };
     const token = await this.jwtService.signAsync(payload);
     const result: User = {
-      id: profile.id,
-      username: profile.username,
-      displayName: profile.displayName,
-      photos: profile.photos,
+      id,
+      username,
+      displayName,
+      photos,
       access_token: accessToken,
-      email: profile.emails[0].value,
+      email: emails[0].value,
       token,
     };
 

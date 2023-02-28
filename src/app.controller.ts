@@ -6,7 +6,7 @@ export class AppController {
   randomNumDbs = Math.floor(Math.random() * 10);
   constructor(@Inject(CACHE_MANAGER) private cacheManager: Cache) {}
 
-  @Get('get-number-cache')
+  @Get('')
   async getNumber(): Promise<any> {
     const val = await this.cacheManager.get('name');
     if (val) {

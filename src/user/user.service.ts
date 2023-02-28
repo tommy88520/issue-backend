@@ -1,15 +1,16 @@
 import axios from 'axios';
 import { Injectable, Inject, CACHE_MANAGER } from '@nestjs/common';
 import { UnauthorizedException } from '../common/httpError';
-import { CreateIssue } from './dto/create-issue.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
-import { GetUserIssueDto } from './dto/get-user-issue.dto';
-import { GetIssueDetailDto } from './dto/get-issue-detail.dto';
-import { SearchIssueDto } from './dto/search-issue.dto';
-import { Issues, IssueDetail } from './type/type';
+import {
+  IssueDetail,
+  SearchIssue,
+  GetIssueDetail,
+  UpdateUser,
+  CreateIssue,
+} from './type/type';
 import { Cache } from 'cache-manager';
-
 import { paginatedResults } from '../utils/paging';
+
 const userRequest = axios.create({
   baseURL: 'https://api.github.com',
   headers: {
@@ -38,7 +39,11 @@ export class UserService {
     if (result) return '新增成功';
   }
 
-  async findRepos(user: string, access_token: string, page: number) {
+  async findRepos(
+    user: string,
+    access_token: string,
+    page: number,
+  ): Promise<string[]> {
     const userRepos = await userRequest
       .get(`users/${user}/repos`, {
         headers: {
@@ -61,37 +66,10 @@ export class UserService {
         throw new UnauthorizedException(error.code);
       });
 
-    return userRepos as string[];
+    return userRepos;
   }
 
-  async getAllIssues(userData: GetUserIssueDto): Promise<Issues[]> {
-    const { owner, repo, access_token, query } = userData;
-    const result = await userRequest
-      .get(`/repos/${owner}/${repo}/issues`, {
-        headers: {
-          Authorization: `Bearer ${access_token}`,
-        },
-        params: query,
-      })
-      .then((res) => {
-        const allIssues = [];
-        res.data.forEach((item) => {
-          const { title, number, labels, created_at, body } = item;
-          const label = labels.length
-            ? { name: labels[0].name, description: labels[0].description }
-            : { name: '', description: '' };
-          allIssues.push({ title, number, label, created_at, body });
-        });
-        return allIssues;
-      })
-      .catch((error) => {
-        throw new UnauthorizedException(error.code);
-      });
-
-    return result as Issues[];
-  }
-
-  async getIssue(userData: GetIssueDetailDto): Promise<IssueDetail> {
+  async getIssue(userData: GetIssueDetail): Promise<IssueDetail | null> {
     const { owner, repo, issue_number, access_token } = userData;
     const result = await userRequest
       .get(`/repos/${owner}/${repo}/issues/${issue_number}`, {
@@ -116,10 +94,10 @@ export class UserService {
       .catch((error) => {
         throw new UnauthorizedException(error.code);
       });
-    return result as IssueDetail | null;
+    return result;
   }
 
-  async update(userData: UpdateUserDto) {
+  async update(userData: UpdateUser) {
     const { owner, repo, issue_number, access_token, issue } = userData;
     const result = await userRequest
       .patch(`/repos/${owner}/${repo}/issues/${issue_number}`, issue, {
@@ -136,7 +114,7 @@ export class UserService {
     if (result) return 'Success!';
   }
 
-  async search(query: SearchIssueDto) {
+  async search(query: SearchIssue): Promise<IssueDetail[]> {
     const { access_token, owner, repo, q, params, label, noCache } = query;
     const { page, sort, order } = params;
     if (!q && !label && noCache === 'false') {
@@ -214,6 +192,7 @@ export class UserService {
       .catch((error) => {
         throw new UnauthorizedException(error.code);
       });
+
     const result = paginatedResults(params.page, 10, userIssues);
     if (!q && !label && result.length) {
       await this.cacheManager.set(`user:${repo}:allIssues`, userIssues);
@@ -242,6 +221,6 @@ export class UserService {
           await this.cacheManager.set(`user:${repo}:allIssues`, userIssues);
       }
     }
-    return result as IssueDetail[];
+    return result;
   }
 }

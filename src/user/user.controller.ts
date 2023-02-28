@@ -12,14 +12,16 @@ import {
 
 import { Request } from 'express';
 import { UserService } from './user.service';
-import { CreateIssue } from './dto/create-issue.dto';
-import { GetIssueDetailDto } from './dto/get-issue-detail.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
-import { GetUserIssueDto } from './dto/get-user-issue.dto';
+import {
+  CreateIssue,
+  GetIssueDetail,
+  UpdateUser,
+  SearchIssue,
+} from './type/type';
+
 import { GithubGuard } from '../auth/github/github.guard';
 import { JwtAuthGuard } from '../auth/jwt/jwt.guard';
 import { User } from '../config/types/user';
-import { SearchIssueDto } from './dto/search-issue.dto';
 import { InternalServerError } from '../common/httpError';
 @Controller('user')
 export class UserController {
@@ -57,25 +59,11 @@ export class UserController {
     return result;
   }
 
-  @Get('getAllIssues')
-  @UseGuards(JwtAuthGuard)
-  async findAllIssues(@Query() query: any, @Req() req: Request) {
-    const { token, username } = req.user as User;
-    const userData: GetUserIssueDto = {
-      owner: username,
-      access_token: token,
-      per_page: 10,
-      ...query,
-    };
-
-    return await this.userService.getAllIssues(userData);
-  }
-
   @Get('getIssue')
   @UseGuards(JwtAuthGuard)
   async getIssue(@Query() query: any, @Req() req: Request) {
     const { token, username } = req.user as User;
-    const userData: GetIssueDetailDto = {
+    const userData: GetIssueDetail = {
       owner: username,
       access_token: token,
       ...query,
@@ -98,12 +86,12 @@ export class UserController {
 
   @Patch('updateIssue')
   @UseGuards(JwtAuthGuard)
-  async update(@Body() updateUserDto: UpdateUserDto, @Req() req: Request) {
+  async update(@Body() updateUser: UpdateUser, @Req() req: Request) {
     const { token, username } = req.user as User;
-    const userData: UpdateUserDto = {
+    const userData: UpdateUser = {
       owner: username,
       access_token: token,
-      ...updateUserDto,
+      ...updateUser,
     };
 
     return await this.userService.update(userData);
@@ -113,7 +101,7 @@ export class UserController {
   @UseGuards(JwtAuthGuard)
   async search(@Query() query: any, @Req() req: Request) {
     const { token, username } = req.user as User;
-    const userData: SearchIssueDto = {
+    const userData: SearchIssue = {
       access_token: token,
       owner: username,
       ...query,
