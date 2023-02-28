@@ -9,7 +9,8 @@ import {
   Res,
   Query,
 } from '@nestjs/common';
-import { Request, Response } from 'express';
+
+import { Request } from 'express';
 import { UserService } from './user.service';
 import { CreateIssue } from './dto/create-issue.dto';
 import { GetIssueDetailDto } from './dto/get-issue-detail.dto';
@@ -19,7 +20,7 @@ import { GithubGuard } from '../auth/github/github.guard';
 import { JwtAuthGuard } from '../auth/jwt/jwt.guard';
 import { User } from '../config/types/user';
 import { SearchIssueDto } from './dto/search-issue.dto';
-
+import { InternalServerError } from '../common/httpError';
 @Controller('user')
 export class UserController {
   constructor(private readonly userService: UserService) {}
@@ -33,6 +34,7 @@ export class UserController {
   @Get('github/redirect')
   @UseGuards(GithubGuard)
   async githubAuthCallback(@Req() req: Request, @Res() res) {
+    if (!req.user) throw new InternalServerError();
     const result = req.user as User;
     res.redirect(`${process.env.FRONTEND_URL}?token=${result.token}`);
   }
@@ -112,12 +114,10 @@ export class UserController {
   async search(@Query() query: any, @Req() req: Request) {
     const { token, username } = req.user as User;
     const userData: SearchIssueDto = {
-      owner: username,
       access_token: token,
+      owner: username,
       ...query,
     };
-    // console.log(userData);
-
     return await this.userService.search(userData);
   }
 }

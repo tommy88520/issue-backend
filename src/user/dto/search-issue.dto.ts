@@ -10,4 +10,5 @@ export class SearchIssueDto {
     per_page: number;
     page: number;
   };
+  noCache: string;
 }

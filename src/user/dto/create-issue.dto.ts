@@ -5,7 +5,7 @@ export class CreateIssue {
   issue: {
     title: string;
     body: any;
-    label: string;
+    labels: string;
     state: string;
   };
 }
