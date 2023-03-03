@@ -9,6 +9,6 @@ export function paginatedResults(
   const startIndex = (page - 1) * limit;
   const endIndex = page * limit;
 
-  const paginatedResults = model.slice(startIndex, endIndex);
-  return paginatedResults;
+  const paginated = model.slice(startIndex, endIndex);
+  return paginated;
 }
