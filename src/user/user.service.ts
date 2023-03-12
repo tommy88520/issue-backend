@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { Injectable, Inject, CACHE_MANAGER } from '@nestjs/common';
-import { UnauthorizedException } from '../common/httpError';
+import { UnauthorizedException, BadRequestError } from '../common/httpError';
 import {
   IssueDetail,
   SearchIssue,
@@ -190,7 +190,11 @@ export class UserService {
         return allIssues;
       })
       .catch((error) => {
-        throw new UnauthorizedException(error.code);
+        if (error.response.status == 401) {
+          throw new UnauthorizedException(error.code);
+        } else {
+          throw new BadRequestError();
+        }
       });
 
     const result = paginatedResults(params.page, 10, userIssues);
