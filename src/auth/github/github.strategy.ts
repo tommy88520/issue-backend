@@ -21,7 +21,7 @@ export class GithubStrategy extends PassportStrategy(Strategy, 'github') {
         'workflow',
         'codespace',
         'user:email',
-        'repo',
+        'public_repo',
         'write:discussion',
       ],
     });
