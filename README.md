@@ -24,3 +24,12 @@ npm install
 ```
 npm run dev
 ```
+
+## **專案架構**
+
+主要分為兩個部分：
+
+1. auth: 包含jwt與github登入strategy與拿到會員資料的地方。
+2. user: 管理所有前端所需api，controller管理路由、service管理與github api溝通邏輯、整理資料結構、撰寫cache的地方。
+
+
