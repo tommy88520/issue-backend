@@ -115,12 +115,12 @@ export class UserService {
   }
 
   async search(query: SearchIssue): Promise<IssueDetail[]> {
-    const { access_token, owner, repo, q, params, label, noCache } = query;
-    const { page, sort, order } = params;
+    const { access_token, owner, repo, q, page, sort, order, label, noCache } =
+      query;
     if (!q && !label && noCache === 'false') {
       const val = await this.cacheManager.get(`user:${repo}:allIssues`);
       if (val) {
-        const result = paginatedResults(page, 10, val);
+        const result = paginatedResults(page, 10, val, order);
         return result;
       }
     }
@@ -132,7 +132,7 @@ export class UserService {
             `user:${repo}:allIssues:open`,
           );
           if (openVal) {
-            const result = paginatedResults(page, 10, openVal);
+            const result = paginatedResults(page, 10, openVal, order);
             return result;
           }
           break;
@@ -141,7 +141,7 @@ export class UserService {
             `user:${repo}:allIssues:inProgress`,
           );
           if (progressVal) {
-            const result = paginatedResults(page, 10, progressVal);
+            const result = paginatedResults(page, 10, progressVal, order);
             return result;
           }
           break;
@@ -150,14 +150,14 @@ export class UserService {
             `user:${repo}:allIssues:done`,
           );
           if (doneVal) {
-            const result = paginatedResults(page, 10, doneVal);
+            const result = paginatedResults(page, 10, doneVal, order);
             return result;
           }
           break;
         default:
           const val = await this.cacheManager.get('user:allIssues');
           if (val) {
-            const result = paginatedResults(page, 10, val);
+            const result = paginatedResults(page, 10, val, order);
             return result;
           }
       }
@@ -174,7 +174,7 @@ export class UserService {
           },
           params: {
             sort,
-            order,
+            // order,
           },
         },
       )
@@ -190,6 +190,7 @@ export class UserService {
         return allIssues;
       })
       .catch((error) => {
+        console.log(error);
         if (error.response.status == 401) {
           throw new UnauthorizedException(error.code);
         } else {
@@ -197,7 +198,7 @@ export class UserService {
         }
       });
 
-    const result = paginatedResults(params.page, 10, userIssues);
+    const result = paginatedResults(page, 10, userIssues, order);
     if (!q && !label && result.length) {
       await this.cacheManager.set(`user:${repo}:allIssues`, userIssues);
     }

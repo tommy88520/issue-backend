@@ -42,12 +42,10 @@ class SearchIssue {
   repo: string;
   q: string;
   label: string;
-  params: {
-    sort: string;
-    order: string;
-    per_page: number;
-    page: number;
-  };
+  sort: string;
+  order: string;
+  per_page: number;
+  page: number;
   noCache: string;
 }
 class GetUserIssue {
