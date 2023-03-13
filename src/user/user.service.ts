@@ -174,7 +174,6 @@ export class UserService {
           },
           params: {
             sort,
-            // order,
           },
         },
       )
