@@ -164,7 +164,6 @@ export class UserService {
     }
 
     const labels = label ? `+is:issue+label:"${label}"` : '';
-
     const userIssues = await userRequest
       .get(
         `search/issues?q=${q}+is:open+is:issue+repo:${owner}/${repo}${labels}`,
@@ -189,7 +188,6 @@ export class UserService {
         return allIssues;
       })
       .catch((error) => {
-        console.log(error);
         if (error.response.status == 401) {
           throw new UnauthorizedException(error.code);
         } else {
@@ -200,7 +198,10 @@ export class UserService {
     const result = paginatedResults(page, 10, userIssues, order);
     if (!q && !label && result.length) {
       await this.cacheManager.set(`user:${repo}:allIssues`, userIssues);
+    } else {
+      await this.cacheManager.reset();
     }
+
     if (!q && label && result.length) {
       switch (label) {
         case 'Open':
@@ -224,6 +225,8 @@ export class UserService {
         default:
           await this.cacheManager.set(`user:${repo}:allIssues`, userIssues);
       }
+    } else {
+      await this.cacheManager.reset();
     }
     return result;
   }
